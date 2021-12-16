@@ -10,7 +10,7 @@ static void
 print_usage(char * path)
 {
 	printf("Usage:\n"
-			"%s <process_name> <path_to_dll>\n",
+			"%s <process_name> <full_path_to_dll>\n",
 			path);
 }
 
