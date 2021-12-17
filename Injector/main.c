@@ -18,37 +18,38 @@ print_usage(char * path)
 static bool
 inject(const char * name_process, const char * path_dll)
 {
-    // Get the process id
-    DWORD process_id = trainer_process_id(name_process);
-    if (process_id == 0) {
+    // Verify that the dll file exists
+    DWORD fattr = GetFileAttributesA(path_dll);
+    if (!(fattr != INVALID_FILE_ATTRIBUTES && !(fattr & FILE_ATTRIBUTE_DIRECTORY))) {
         return false;
     }
 
-    // Open a handle to target process
-    HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, process_id);
-    if (hProcess == NULL) {
+    // Open a handle to the process
+    TProcess process = trainer_process_connect(name_process);
+    if (process.id == 0 || process.handle == NULL) {
         return false;
     }
 
     // Allocate memory for path_dll in the target process
-    LPVOID p_dll_path = VirtualAllocEx(hProcess, 0, strlen(path_dll) + 1, MEM_COMMIT, PAGE_READWRITE);
+    LPVOID p_dll_path = VirtualAllocEx(process.handle, 0, strlen(path_dll) + 1, MEM_COMMIT, PAGE_READWRITE);
     if (p_dll_path == NULL) {
         return false;
     }
 
     // Write path_dll to the allocated memory in the target process
-    WriteProcessMemory(hProcess, p_dll_path, (LPVOID)path_dll, strlen(path_dll) + 1, 0);
+    WriteProcessMemory(process.handle, p_dll_path, (LPVOID)path_dll, strlen(path_dll) + 1, 0);
 
     // Create a remote thread in the target process that runs LoadLibraryA with
-    HANDLE hThread = CreateRemoteThread(hProcess, 0, 0, (LPTHREAD_START_ROUTINE)LoadLibraryA, p_dll_path, 0, 0);
+    HANDLE hThread = CreateRemoteThread(process.handle, 0, 0, (LPTHREAD_START_ROUTINE)LoadLibraryA, p_dll_path, 0, 0);
 
+    bool thread_ok = false;
     if (hThread) {
-        WaitForSingleObject(hThread, INFINITE);
+        thread_ok = WaitForSingleObject(hThread, INFINITE) == 0;
     }
 
-    VirtualFreeEx(hProcess, p_dll_path, 0, MEM_RELEASE);
+    VirtualFreeEx(process.handle, p_dll_path, 0, MEM_RELEASE);
 
-    return true;
+    return thread_ok;
 }
 
 
@@ -62,8 +63,7 @@ main(int argc, char * argv[])
 
     if (inject(argv[1], argv[2])) {
         puts("Injection succeeded.\n");
-    }
-    else {
+    } else {
         puts("Injection failed.\n");
     }
 
