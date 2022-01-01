@@ -1,6 +1,7 @@
 #include "trainer/trainer.h"
 #include <stdio.h>
 #include <stdbool.h>
+#include "hooks.h"
 
 
 enum Property {
@@ -10,6 +11,9 @@ enum Property {
     P_GOLD,
     P_COUNT
 };
+
+
+uintptr_t base;
 
 
 DWORD WINAPI
@@ -34,6 +38,8 @@ InjectThread(HMODULE hModule)
         '4', // gold
     };
 
+    int key_gold_hook = '5';
+
     int key_stop = VK_END;
 
     int property_values[P_COUNT] = {
@@ -44,6 +50,7 @@ InjectThread(HMODULE hModule)
     };
 
     bool property_status[P_COUNT] = { 0 };
+    bool gold_hook_status = false;
 
 
     uintptr_t offset_damage = 0x15D8B; // disable player and enemy damage
@@ -59,8 +66,9 @@ InjectThread(HMODULE hModule)
     FILE * fp;
     freopen_s(&fp, "CONOUT$", "w", stdout);
 
-    uintptr_t base = trainer_internal_address_module_base();
+    base = trainer_internal_address_module_base();
 
+    printf("Module base = %x\n\n", base);
     printf("Press 'End' to exit.\n\n");
 
     while (true) {
@@ -69,6 +77,17 @@ InjectThread(HMODULE hModule)
             printf("\nStopping .. \n");
             Sleep(1000);
             break;
+        }
+
+        // gold hook
+        if (GetAsyncKeyState(key_gold_hook) & 1) {
+            gold_hook_status = !gold_hook_status;
+
+            if (gold_hook_status) {                
+                gold_hook_inject();
+            } else {
+                gold_hook_eject();
+            }
         }
 
         for (enum Property p = P_HEALTH; p < P_COUNT; ++p) {
@@ -106,16 +125,20 @@ InjectThread(HMODULE hModule)
         trainer_internal_memory_read((void *)address_y, &fy, sizeof(fy));
 
         // display status
-        printf("\rHealth %3s (%c), Bomb %3s (%c), Rope %3s (%c), Gold %3s (%c), Damage %3s (%c), Postion: [%5.1f, %5.1f]",
+        printf("\rHealth %3s (%c), Bomb %3s (%c), Rope %3s (%c), Gold %3s (%c), GoldHook %3s (%c), Damage %3s (%c), Postion: [%5.1f, %5.1f]",
             property_status[P_HEALTH] ? "on" : "off", property_keys[P_HEALTH],
             property_status[P_BOMB] ? "on" : "off", property_keys[P_BOMB],
             property_status[P_ROPE] ? "on" : "off", property_keys[P_ROPE],
             property_status[P_GOLD] ? "on" : "off", property_keys[P_GOLD],
+            gold_hook_status ? "on" : "off", key_gold_hook,
             damage_enabled ? "on" : "off", key_damage,
             fx, fy);
 
         Sleep(10);
     }
+
+    // restore original code bytes to avoid accessing this dll after it's been ejected
+    gold_hook_eject();
 
     fclose(fp);
     FreeConsole();

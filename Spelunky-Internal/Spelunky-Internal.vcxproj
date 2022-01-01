@@ -153,11 +153,15 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="dllmain.c" />
+    <ClCompile Include="gold_hook.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Trainer\Trainer.vcxproj">
       <Project>{57a3aa06-1c78-4cca-98f4-5b2c1dff45bf}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="hooks.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
