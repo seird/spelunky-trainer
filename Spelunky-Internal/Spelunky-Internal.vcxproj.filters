@@ -21,6 +21,9 @@
     <ClCompile Include="gold_hook.c">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="damage_hook.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="hooks.h">

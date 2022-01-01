@@ -154,6 +154,7 @@
   <ItemGroup>
     <ClCompile Include="dllmain.c" />
     <ClCompile Include="gold_hook.c" />
+    <ClCompile Include="damage_hook.c" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Trainer\Trainer.vcxproj">
