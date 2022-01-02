@@ -62,8 +62,6 @@ InjectThread(HMODULE hModule)
     uint8_t damage_bytes_original[] = {0x8B, 0xBE, 0x40, 0x01, 0x00, 0x00};
 
     /////////////////////////////////////////////////////////////////////////
-
-
     AllocConsole();
     FILE * fp;
     freopen_s(&fp, "CONOUT$", "w", stdout);

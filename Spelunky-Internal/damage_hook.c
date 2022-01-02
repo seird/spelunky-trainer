@@ -6,67 +6,12 @@
 
 extern uintptr_t base; // module base initialized in dllmain.c
 
+extern void damage_hook();
+
 
 static uintptr_t damage_hook_addr; // address to start the hook
-static uintptr_t damage_hook_player_retaddr;
-static uintptr_t damage_hook_normal_retaddr;
-
-
-__declspec(naked) // make sure no extra instructions get inserted
-static void
-damage_hook()
-{
-    // save registers
-    __asm pushad
-
-    // new code
-
-    // if [esi + 0xC] == 0, then the player is taking damage
-    __asm {
-        mov eax, [esi + 0xC]
-        cmp eax, 0
-        jnz function_resume
-    }
-
-    // the player receives damage -> skip function
-
-    // restore registers
-    __asm popad
-    // continue rest of the start of the function
-    __asm {
-        _emit 0x80
-        _emit 0xBE
-        _emit 0x14
-        _emit 0x02
-        _emit 0x00
-        _emit 0x00
-        _emit 0x00 ; cmp     byte ptr[esi + 214h], 0
-        _emit 0x53 ; push    ebx
-        _emit 0x55 ; push    ebp
-        _emit 0x8B
-        _emit 0x6C
-        _emit 0x24
-        _emit 0x1C ; mov     ebp, [esp + 14h + arg_4]
-        _emit 0x57 ; push    edi
-    }
-
-    // jump to the end of the function
-    __asm jmp damage_hook_player_retaddr
-
-    // the player does damage -> resume function as normal
-function_resume:
-    __asm {
-        __asm popad
-        _emit 0x80
-        _emit 0xBE
-        _emit 0x14
-        _emit 0x02
-        _emit 0x00
-        _emit 0x00
-        _emit 0x00 ; cmp     byte ptr[esi + 214h], 0
-        jmp damage_hook_normal_retaddr
-    }    
-}
+uintptr_t damage_hook_player_retaddr; // to be accessed by damage_hook_asm.asm
+uintptr_t damage_hook_normal_retaddr; // to be accessed by damage_hook_asm.asm
 
 
 void

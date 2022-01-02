@@ -30,4 +30,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
+  <ItemGroup>
+    <NASM Include="damage_hook_asm.asm">
+      <Filter>Source Files</Filter>
+    </NASM>
+  </ItemGroup>
 </Project>
